@@ -1,6 +1,6 @@
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, onUnmounted, watch, watchEffect } from 'vue';
-import axios, { AxiosError } from 'axios';
+import { defineComponent, ref, computed, onMounted, onUnmounted, watch, watchEffect } from 'vue'
+import axios, { AxiosError } from 'axios'
 import SearchIcon from './icons/IconSearch.vue'
 import PlusIcon from './icons/IconPlus.vue'
 import TickIcon from './icons/IconTick.vue'
@@ -10,70 +10,68 @@ import Modal from './Modal.vue'
 
 import TimeIcon from './icons/IconTime.vue'
 import InfoIcon from './icons/IconInfo.vue'
-import type { IResGetTracks } from '@/interfaces/ITrack';
-import { useRoute } from 'vue-router';
-import type { ItemPlaylist, Tracks } from '@/interfaces/IPlaylist';
-import type { Item, IResPlaylistById } from '@/interfaces/IPlayListById';
+import type { IResGetTracks } from '@/interfaces/ITrack'
+import { useRoute } from 'vue-router'
+import type { ItemPlaylist, Tracks } from '@/interfaces/IPlaylist'
+import type { Item, IResPlaylistById } from '@/interfaces/IPlayListById'
 import IconMusic from './icons/IconMusic.vue'
 
 interface EditPlayList {
-  title: string, desription: string
+  title: string
+  desription: string
 }
 interface Album {
-  cover: string;
-  title: string;
-  createBy: string;
-  description: string;
-  year: string;
-  tracks: Item[];
+  cover: string
+  title: string
+  createBy: string
+  description: string
+  year: string
+  tracks: Item[]
 }
-
 
 export default defineComponent({
   name: 'AlbumView',
   components: { SearchIcon, InfoIcon, Popover, TimeIcon, PlusIcon, TickIcon, IconMusic, Modal },
   setup() {
-    const accessToken = ref<string | null>(localStorage.getItem('access_token'));
-    const searchQuery = ref(localStorage.getItem('search_music') || '');
-    const searchResults = ref<IResGetTracks | null>(null);
-    const searchError = ref<string | null>(null);
-    const API_ENDPOINT = 'https://api.spotify.com/v1';
-    const open = ref<boolean>(false);
-    const openModal = ref<boolean>(false);
-    const openModalEdit = ref<boolean>(false);
+    const accessToken = ref<string | null>(localStorage.getItem('access_token'))
+    const searchQuery = ref(localStorage.getItem('search_music') || '')
+    const searchResults = ref<IResGetTracks | null>(null)
+    const searchError = ref<string | null>(null)
+    const API_ENDPOINT = 'https://api.spotify.com/v1'
+    const open = ref<boolean>(false)
+    const openModal = ref<boolean>(false)
+    const openModalEdit = ref<boolean>(false)
     const album = ref<Album>({
-      cover: 'https://pickasso.spotifycdn.com/image/ab67c0de0000deef/dt/v1/img/radio/artist/3moR9d0X97NAtZRhHWOta5/en', // Replace with actual path
+      cover:
+        'https://pickasso.spotifycdn.com/image/ab67c0de0000deef/dt/v1/img/radio/artist/3moR9d0X97NAtZRhHWOta5/en', // Replace with actual path
       title: 'PUN',
       description: 'PUN',
       createBy: 'PUN',
       year: '2024',
       tracks: [],
-    });
+    })
     const editingPlaylist = ref<EditPlayList>({
       title: album.value?.title || '',
       desription: album.value?.description || '',
-    });
-    const loading = ref(true);
-    const error = ref<string | null>(null);
-    const tracks = ref<Tracks[]>([]);
-    const playlist = ref<IResPlaylistById>();
+    })
+    const loading = ref(true)
+    const error = ref<string | null>(null)
+    const tracks = ref<Tracks[]>([])
+    const playlist = ref<IResPlaylistById>()
 
-    const route = useRoute();
-    const SPOTIFY_API_BASE_URL = 'https://api.spotify.com/v1';
+    const route = useRoute()
+    const SPOTIFY_API_BASE_URL = 'https://api.spotify.com/v1'
 
+    const playlistId = ref(route.params.id)
 
-    const playlistId = ref(route.params.id);
-
-
-
-    const clientId = import.meta.env.VITE_CLIENT_ID; // Replace with your Spotify Client ID
-    const clientSecret = import.meta.env.VITE_SECRET_ID; // Replace with your Spotify Client Secret
+    const clientId = import.meta.env.VITE_CLIENT_ID // Replace with your Spotify Client ID
+    const clientSecret = import.meta.env.VITE_SECRET_ID // Replace with your Spotify Client Secret
 
     onMounted(async () => {
       if (!accessToken.value || !playlistId.value) return
-      fetchPlaylistById();
+      fetchPlaylistById()
       // fectchTracks();
-    });
+    })
 
     watchEffect(() => {
       album.value = {
@@ -82,7 +80,7 @@ export default defineComponent({
         createBy: playlist.value?.owner?.display_name || '',
         year: playlist.value?.tracks?.items?.[0]?.added_at?.toString() || '',
         tracks: playlist.value?.tracks?.items || [],
-        description: playlist.value?.description || ''
+        description: playlist.value?.description || '',
       }
       editingPlaylist.value = {
         title: playlist.value?.name || '',
@@ -90,11 +88,10 @@ export default defineComponent({
       }
     })
 
-
     const fectchTracks = async () => {
       try {
         // 1. Get Access Token (Client Credentials Flow)
-        if (!accessToken.value || !playlistId) return
+        if (!accessToken.value || !playlistId.value) return
 
         const tokenResponse = await axios.post(
           'https://accounts.spotify.com/api/token',
@@ -104,41 +101,40 @@ export default defineComponent({
               'Content-Type': 'application/x-www-form-urlencoded',
               Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
             },
-          }
-        );
+          },
+        )
 
-        accessToken.value = tokenResponse.data.access_token;
+        accessToken.value = tokenResponse.data.access_token
         // 2. Use the access token to fetch music (e.g., featured playlists)
         const response = await axios.get(
-          `https://api.spotify.com/v1/playlists/${playlistId}/tracks`, // Example: Today's Top Hits playlist
+          `https://api.spotify.com/v1/playlists/${playlistId.value}/tracks`, // Example: Today's Top Hits playlist
           {
             headers: {
               Authorization: `Bearer ${accessToken.value}`,
             },
-          }
-        );
+          },
+        )
 
         if (response.data && response.data.items) {
-          tracks.value = response.data.items.slice(0, 20).map((item: any) => item.track);
+          tracks.value = response.data.items.slice(0, 20).map((item: any) => item.track)
         } else {
-          error.value = "No tracks found in the playlist"
+          error.value = 'No tracks found in the playlist'
         }
-
       } catch (err: any) {
-        console.error("Error fetching data:", err);
+        console.error('Error fetching data:', err)
         if (err.response) {
-          error.value = `Error: ${err.response.status} - ${err.response.data.error.message}`;
+          error.value = `Error: ${err.response.status} - ${err.response.data.error.message}`
         } else if (err.request) {
-          error.value = "Error: No response from server";
+          error.value = 'Error: No response from server'
         } else {
-          error.value = "Error: Request setup failed";
+          error.value = 'Error: Request setup failed'
         }
         // if (err.status === 401) {
         //   localStorage.clear()
         //   window.location.reload()
         // }
       } finally {
-        loading.value = false;
+        loading.value = false
       }
     }
     const fetchPlaylistById = async () => {
@@ -149,61 +145,62 @@ export default defineComponent({
           headers: {
             Authorization: `Bearer ${accessToken.value}`,
           },
-        });
+        })
 
         if (response.data) {
-          playlist.value = response.data;
+          playlist.value = response.data
         } else {
-          error.value = "No Playlist found"
+          error.value = 'No Playlist found'
         }
-
       } catch (err: any) {
-        console.error("Error fetching data:", err);
+        console.error('Error fetching data:', err)
         if (err.response) {
-          error.value = `Error: ${err.response.status} - ${err.response.data.error.message}`;
+          error.value = `Error: ${err.response.status} - ${err.response.data.error.message}`
         } else if (err.request) {
-          error.value = "Error: No response from server";
+          error.value = 'Error: No response from server'
         } else {
-          error.value = "Error: Request setup failed";
+          error.value = 'Error: Request setup failed'
         }
         if (err.status === 401) {
           window.location.reload()
         }
       } finally {
-        loading.value = false;
+        loading.value = false
       }
     }
     const formatDuration = (duration: number): string => {
-      const timeSeconds = Math.floor(duration / 1000);
+      const timeSeconds = Math.floor(duration / 1000)
 
-      const minutes = Math.floor(timeSeconds / 60);
-      const seconds = Math.floor(timeSeconds - (60 * 3));
-      return `${minutes}:${(seconds >= 0 ? seconds : -seconds).toString().padStart(2, '0')}`;
-    };
+      const minutes = Math.floor(timeSeconds / 60)
+      const seconds = Math.floor(timeSeconds - 60 * 3)
+      return `${minutes}:${(seconds >= 0 ? seconds : -seconds).toString().padStart(2, '0')}`
+    }
 
     const searchMusic = async () => {
       if (!accessToken.value || !searchQuery.value) {
-        searchResults.value = [] as any;
-        return;
+        searchResults.value = [] as any
+        return
       }
-      searchError.value = null; // Clear any previous errors
+      searchError.value = null // Clear any previous errors
       try {
         const response = await axios.get(`${API_ENDPOINT}/search`, {
           headers: { Authorization: `Bearer ${accessToken.value}` },
-          params: { q: searchQuery.value, type: 'track' }
-        });
+          params: { q: searchQuery.value, type: 'track' },
+        })
 
-        searchResults.value = response.data;
-      } catch (error: any) { // Type the error as any to get more info
+        searchResults.value = response.data
+      } catch (error: any) {
+        // Type the error as any to get more info
         const err = error as AxiosError
-        console.error('Error searching music:', err);
-        searchError.value = error.response?.data?.error?.message || 'An error occurred during the search.';
+        console.error('Error searching music:', err)
+        searchError.value =
+          error.response?.data?.error?.message || 'An error occurred during the search.'
       }
-    };
+    }
 
     const searchInput = async () => {
-      if (playlistId) {
-        // 
+      if (playlistId.value) {
+        //
       } else {
         searchMusic()
       }
@@ -220,15 +217,15 @@ export default defineComponent({
         },
         {
           headers: { Authorization: `Bearer ${accessToken.value}` },
-        }
-      );
+        },
+      )
       if (me) {
         fetchPlaylistById()
       } else {
         fetchPlaylistById()
         searchMusic()
       }
-      return response.data;
+      return response.data
     }
 
     const removeTracksFromPlaylist = async (trackUris: string[], me?: boolean) => {
@@ -237,17 +234,17 @@ export default defineComponent({
         {
           headers: { Authorization: `Bearer ${accessToken.value}` },
           data: {
-            tracks: trackUris.map(uri => ({ uri })),
+            tracks: trackUris.map((uri) => ({ uri })),
           },
-        }
-      );
+        },
+      )
       if (me) {
         fetchPlaylistById()
       } else {
         searchMusic()
         fetchPlaylistById()
       }
-      return response.data;
+      return response.data
     }
     const onOpenModal = () => {
       openModal.value = !openModal.value
@@ -257,16 +254,13 @@ export default defineComponent({
       openModalEdit.value = !openModalEdit.value
     }
     const updatePlaylist = async (newDetails: EditPlayList) => {
-
-
       const response = await axios.put(
         `${SPOTIFY_API_BASE_URL}/playlists/${playlistId.value}`,
         { name: newDetails?.title, description: newDetails?.desription },
         {
           headers: { Authorization: `Bearer ${accessToken.value}` },
-        }
-      );
-      console.log('response', response);
+        },
+      )
 
       if (response.status === 200) {
         window.location.reload()
@@ -275,22 +269,43 @@ export default defineComponent({
     }
 
     const deletePlaylist = async () => {
-      const response = await axios.delete(`${SPOTIFY_API_BASE_URL}/playlists/${playlistId.value}/followers`, {
-        headers: { Authorization: `Bearer ${accessToken.value}` },
-      });
-      console.log('response', response);
+      const response = await axios.delete(
+        `${SPOTIFY_API_BASE_URL}/playlists/${playlistId.value}/followers`,
+        {
+          headers: { Authorization: `Bearer ${accessToken.value}` },
+        },
+      )
 
       if (response.status === 200) {
         window.location.href = '/'
         return response.data
       }
     }
-    return { openModalEdit, editingPlaylist, onOpenModalEdit, fetchPlaylistById, updatePlaylist, deletePlaylist, onOpenModal, album, formatDuration, searchMusic, searchQuery, open, openPopover, searchResults, searchError, searchInput, addTracksToPlaylist, removeTracksFromPlaylist, openModal };
+    return {
+      openModalEdit,
+      editingPlaylist,
+      onOpenModalEdit,
+      fetchPlaylistById,
+      updatePlaylist,
+      deletePlaylist,
+      onOpenModal,
+      album,
+      formatDuration,
+      searchMusic,
+      searchQuery,
+      open,
+      openPopover,
+      searchResults,
+      searchError,
+      searchInput,
+      addTracksToPlaylist,
+      removeTracksFromPlaylist,
+      openModal,
+    }
   },
-});
+})
 </script>
 <template>
-
   <div class="album-view">
     <div class="album-head">
       <div class="album-img">
@@ -301,43 +316,66 @@ export default defineComponent({
         <h1 class="album-title">{{ album.title }}</h1>
         <p>{{ album.description || '' }}</p>
         <p class="album-details">
-          <span class="album-label">Create by:</span> {{ album.createBy }}, {{ album.tracks.length
-          }}
+          <span class="album-label">Create by:</span> {{ album.createBy }},
+          {{ album.tracks.length }}
           songs
         </p>
         <div class="actions">
-          <button class="play-button">
-            PLAY
-          </button>
+          <button class="play-button">PLAY</button>
 
-          <Modal :open-modal="openModal" :on-open="() => {
-            onOpenModal()
-            openPopover()
-          }" :onSubmit="() => {
-            deletePlaylist()
-            fetchPlaylistById()
-          }">
+          <Modal
+            :open-modal="openModal"
+            :on-open="
+              () => {
+                onOpenModal()
+                openPopover()
+              }
+            "
+            :onSubmit="
+              () => {
+                deletePlaylist()
+                fetchPlaylistById()
+              }
+            "
+          >
             <template #title>Delete from Your Library?</template>
             <template #message>This will delete My Playlist #3 from Your Library.</template>
             <template #confirm>Delete Playlist</template>
           </Modal>
 
-          <Modal :open-modal="openModalEdit" :on-open="() => {
-            console.log('>>>');
+          <Modal
+            :open-modal="openModalEdit"
+            :on-open="
+              () => {
+                console.log('>>>')
 
-            onOpenModalEdit()
-            openPopover()
-          }" :onSubmit="() => {
-            if (!editingPlaylist) return
-            updatePlaylist(editingPlaylist)
-            fetchPlaylistById()
-          }">
+                onOpenModalEdit()
+                openPopover()
+              }
+            "
+            :onSubmit="
+              () => {
+                if (!editingPlaylist) return
+                updatePlaylist(editingPlaylist)
+                fetchPlaylistById()
+              }
+            "
+          >
             <template #title>Update {{ album.title }} from Your Library?</template>
             <template #message>
               <div class="form-update">
-                <input type="text" v-model="editingPlaylist.title" class="input-search" placeholder="Title Playlisr" />
-                <input type="text" v-model="editingPlaylist.desription" class="input-search"
-                  placeholder="Description Playlisr" />
+                <input
+                  type="text"
+                  v-model="editingPlaylist.title"
+                  class="input-search"
+                  placeholder="Title Playlisr"
+                />
+                <input
+                  type="text"
+                  v-model="editingPlaylist.desription"
+                  class="input-search"
+                  placeholder="Description Playlisr"
+                />
               </div>
             </template>
             <template #confirm>Update Playlist</template>
@@ -360,8 +398,13 @@ export default defineComponent({
     <div class="search-music">
       <div class="search">
         <SearchIcon class="search-icon" />
-        <input type="text" v-model="searchQuery" class="input-search" placeholder="Search for music"
-          @keyup.enter="searchMusic" />
+        <input
+          type="text"
+          v-model="searchQuery"
+          class="input-search"
+          placeholder="Search for music"
+          @keyup.enter="searchMusic"
+        />
       </div>
       <p v-if="searchError">{{ searchError }}</p>
     </div>
@@ -378,12 +421,18 @@ export default defineComponent({
         </tr>
       </thead>
       <tbody>
-        <tr v-if="searchResults && searchResults.tracks && searchResults.tracks.items"
-          v-for="(item, index) in searchResults.tracks.items" :key="item.id">
+        <tr
+          v-if="searchResults && searchResults.tracks && searchResults.tracks.items"
+          v-for="(item, index) in searchResults.tracks.items"
+          :key="item.id"
+        >
           <td>
             <div class="action">
-              <TickIcon v-if="album.tracks?.map(track => track.track.id).includes(item.id)" class="icon-tick"
-                @click="removeTracksFromPlaylist([item.uri])" />
+              <TickIcon
+                v-if="album.tracks?.map((track) => track.track.id).includes(item.id)"
+                class="icon-tick"
+                @click="removeTracksFromPlaylist([item.uri])"
+              />
               <PlusIcon v-else class="icon-plus" @click="addTracksToPlaylist([item.uri])" />
             </div>
           </td>
@@ -397,7 +446,10 @@ export default defineComponent({
           <td>
             <div class="action">
               <!-- <PlusIcon class="icon-plus" @click="addTracksToPlaylist([item.track.uri], true)" /> -->
-              <TickIcon class="icon-tick" @click="removeTracksFromPlaylist([item.track.uri], true)" />
+              <TickIcon
+                class="icon-tick"
+                @click="removeTracksFromPlaylist([item.track.uri], true)"
+              />
             </div>
           </td>
           <td>{{ item.track.name }}</td>
@@ -462,10 +514,8 @@ export default defineComponent({
     width: 200px;
     height: 200px;
     border-radius: 4px;
-
   }
 }
-
 
 th {
   color: #b3b3b3;
@@ -522,8 +572,6 @@ tr {
   height: auto;
   border-radius: 10px;
 }
-
-
 
 /* Add more styles as needed */
 .actions {
@@ -608,7 +656,6 @@ tr {
       top: 30%;
       left: 10px;
     }
-
   }
 }
 </style>

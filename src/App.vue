@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
-import Login from '@/components/Login.vue';
-import LeftSidebar from './components/LeftSidebar.vue';
+import Login from '@/components/Login.vue'
+import LeftSidebar from './components/LeftSidebar.vue'
 </script>
 
 <template>
@@ -22,7 +21,7 @@ import LeftSidebar from './components/LeftSidebar.vue';
   display: flex;
   width: 100%;
   gap: 10px;
-  padding: 0 10px
+  padding: 0 10px;
 }
 
 @media screen and (max-width: 600px) {
