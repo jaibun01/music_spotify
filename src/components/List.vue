@@ -263,7 +263,11 @@ export default defineComponent({
       )
 
       if (response.status === 200) {
-        window.location.reload()
+        editingPlaylist.value = newDetails
+        album.value = { ...album.value, title: newDetails?.title, description: newDetails?.desription }
+        openModalEdit.value = false
+        open.value = false
+        // window.location.reload()
         return response.data
       }
     }
@@ -323,59 +327,36 @@ export default defineComponent({
         <div class="actions">
           <button class="play-button">PLAY</button>
 
-          <Modal
-            :open-modal="openModal"
-            :on-open="
-              () => {
-                onOpenModal()
-                openPopover()
-              }
-            "
-            :onSubmit="
-              () => {
-                deletePlaylist()
-                fetchPlaylistById()
-              }
-            "
-          >
+          <Modal :open-modal="openModal" :on-open="() => {
+            onOpenModal()
+            openPopover()
+          }
+            " :onSubmit="() => {
+              deletePlaylist()
+              fetchPlaylistById()
+            }
+              ">
             <template #title>Delete from Your Library?</template>
             <template #message>This will delete My Playlist #3 from Your Library.</template>
             <template #confirm>Delete Playlist</template>
           </Modal>
 
-          <Modal
-            :open-modal="openModalEdit"
-            :on-open="
-              () => {
-                console.log('>>>')
-
-                onOpenModalEdit()
-                openPopover()
-              }
-            "
-            :onSubmit="
-              () => {
-                if (!editingPlaylist) return
-                updatePlaylist(editingPlaylist)
-                fetchPlaylistById()
-              }
-            "
-          >
+          <Modal :open-modal="openModalEdit" :on-open="() => {
+            onOpenModalEdit()
+            openPopover()
+          }
+            " :onSubmit="() => {
+              if (!editingPlaylist) return
+              updatePlaylist(editingPlaylist)
+              fetchPlaylistById()
+            }
+              ">
             <template #title>Update {{ album.title }} from Your Library?</template>
             <template #message>
               <div class="form-update">
-                <input
-                  type="text"
-                  v-model="editingPlaylist.title"
-                  class="input-search"
-                  placeholder="Title Playlisr"
-                />
-                <input
-                  type="text"
-                  v-model="editingPlaylist.desription"
-                  class="input-search"
-                  placeholder="Description Playlisr"
-                />
+                <input type="text" v-model="editingPlaylist.title" class="input-search" placeholder="Title Playlisr" />
+                <input type="text" v-model="editingPlaylist.desription" class="input-search"
+                  placeholder="Description Playlisr" />
               </div>
             </template>
             <template #confirm>Update Playlist</template>
@@ -398,13 +379,8 @@ export default defineComponent({
     <div class="search-music">
       <div class="search">
         <SearchIcon class="search-icon" />
-        <input
-          type="text"
-          v-model="searchQuery"
-          class="input-search"
-          placeholder="Search for music"
-          @keyup.enter="searchMusic"
-        />
+        <input type="text" v-model="searchQuery" class="input-search" placeholder="Search for music"
+          @keyup.enter="searchMusic" />
       </div>
       <p v-if="searchError">{{ searchError }}</p>
     </div>
@@ -421,18 +397,12 @@ export default defineComponent({
         </tr>
       </thead>
       <tbody>
-        <tr
-          v-if="searchResults && searchResults.tracks && searchResults.tracks.items"
-          v-for="(item, index) in searchResults.tracks.items"
-          :key="item.id"
-        >
+        <tr v-if="searchResults && searchResults.tracks && searchResults.tracks.items"
+          v-for="(item, index) in searchResults.tracks.items" :key="item.id">
           <td>
             <div class="action">
-              <TickIcon
-                v-if="album.tracks?.map((track) => track.track.id).includes(item.id)"
-                class="icon-tick"
-                @click="removeTracksFromPlaylist([item.uri])"
-              />
+              <TickIcon v-if="album.tracks?.map((track) => track.track.id).includes(item.id)" class="icon-tick"
+                @click="removeTracksFromPlaylist([item.uri])" />
               <PlusIcon v-else class="icon-plus" @click="addTracksToPlaylist([item.uri])" />
             </div>
           </td>
@@ -446,10 +416,7 @@ export default defineComponent({
           <td>
             <div class="action">
               <!-- <PlusIcon class="icon-plus" @click="addTracksToPlaylist([item.track.uri], true)" /> -->
-              <TickIcon
-                class="icon-tick"
-                @click="removeTracksFromPlaylist([item.track.uri], true)"
-              />
+              <TickIcon class="icon-tick" @click="removeTracksFromPlaylist([item.track.uri], true)" />
             </div>
           </td>
           <td>{{ item.track.name }}</td>
