@@ -17,6 +17,16 @@ See [Vite Configuration Reference](https://vite.dev/config/).
 ## Project Setup
 
 ```sh
+required Web API spotify
+Document: https://developer.spotify.com/documentation/web-api
+
+.env
+VITE_CLIENT_ID=
+VITE_SECRET_ID=
+VITE_REDIRECT_URI=
+```
+
+```sh
 npm install
 ```
 
